@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta thhp-equiv="X-UA-Compatible" content="IE=edge ,chrome=1">
+	<link rel="icon" href="icon_xo.ico">
+	<title>Play With Computer</title>
+	<style>
+		 @keyframes shake {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-5px, 0); }
+  50% { transform: translate(0, 0); }
+  75% { transform: translate(5px, 0); }
+  100% { transform: translate(0, 0); }
+}
+
+.title {
+  animation: shake 0.7s;
+}
+				* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+		}
+		body {
+			background-color: #f0f0f0;
+            display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+		}
+		h1 {
+			text-align: center;
+			margin-top: 50px;
+			margin-bottom: 30px;
+		}
+		.container {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			margin-top: 30px;
+		}
+		.row {
+			display: flex;
+			flex-direction: row;
+		}
+		.cell {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			width: 80px;
+			height: 80px;
+			margin: 5px;
+			background-color: #4CAF50;
+			color: #fff;
+			font-size: 3em;
+			border-radius: 5px;
+			cursor: pointer;
+			transition: background-color 0.3s ease;
+			user-select: none;
+		}
+		.cell:hover {
+			background-color: #e00a0a;
+            transition: background-color 0.5s ease;
+		}
+		.player-turn {
+			margin-top: 20px;
+			font-weight: bold;
+			font-size: 24px;
+			text-align: center;
+		}
+		.reset-button {
+			margin-top: 20px;
+			background-color: #387a8e;
+			padding: 10px 20px;
+			font-size: 16px;
+			border-radius: 5px;
+			color: #fff;
+			border: none;
+			cursor: pointer;
+			transition: background-color 0.3s ease;
+		}
+		.reset-button:hover {
+			background-color: #ffda08;
+            text-shadow: #e00a0a;
+            color: #000000;
+		}
+	</style>
+</head>
+<body>
+	
+	<div class="container">
+		<h1 class="title" style="font-size: 70px; font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;">Start Playing</h1>
+		<div class="row">
+			<div class="cell" id="cell-0" onclick="makeMove(0),playClickSound()"></div>
+			<div class="cell" id="cell-1" onclick="makeMove(1),playClickSound()"></div>
+			<div class="cell" id="cell-2" onclick="makeMove(2),playClickSound()"></div>
+		</div>
+		<div class="row">
+			<div class="cell" id="cell-3" onclick="makeMove(3),playClickSound()"></div>
+			<div class="cell" id="cell-4" onclick="makeMove(4),playClickSound()"></div>
+			<div class="cell" id="cell-5" onclick="makeMove(5),playClickSound()"></div>
+		</div>
+		<div class="row">
+			<div class="cell" id="cell-6" onclick="makeMove(6),playClickSound()"></div>
+			<div class="cell" id="cell-7" onclick="makeMove(7),playClickSound()"></div>
+			<div class="cell" id="cell-8" onclick="makeMove(8),playClickSound()"></div>
+		</div>
+		<div class="player-turn">Player X's turn</div>
+		<button class="reset-button" onclick="resetGame(),playClickSound()">Play Again</button>
+		<button class="reset-button" id="back" onclick="playClickSound()" style="background-color: #e00a0a; .reset-button:hover { color: #ffda08;}" >Back</button>
+	</div>
+	<script>
+		function playClickSound() {
+			var clickSound = new Audio("click-sound.mp3"); // اسم الملف الصوتي
+			clickSound.play();
+		}
+		let currentPlayer = 'X';
+		let gameEnded = false;
+
+		function makeMove(cell) {
+			if (gameEnded) {
+				return;
+			}
+
+			let cellElement = document.getElementById('cell-' + cell);
+
+			if (cellElement.innerHTML !== '') {
+				return;
+			}
+
+			cellElement.innerHTML = currentPlayer;
+
+			if (checkWin()) {
+				document.querySelector('.player-turn').innerHTML = 'Player ' + currentPlayer + ' wins!';
+				gameEnded = true;
+				
+				return;
+				
+			}
+			
+
+			if (checkDraw()) {
+				document.querySelector('.player-turn').innerHTML = 'Draw!';
+				gameEnded = true;
+				return;
+			}
+
+			switchPlayer();
+
+			if (currentPlayer === 'O') {
+				// Computer's turn
+				setTimeout(makeComputerMove, 500);
+			}
+		}
+
+		function makeComputerMove() {
+			let bestScore = -Infinity;
+			let move;
+			for (let i = 0; i <= 8; i++) {
+				if (document.getElementById('cell-' + i).innerHTML === '') {
+					document.getElementById('cell-' + i).innerHTML = 'O';
+					let score = minimax(false);
+					document.getElementById('cell-' + i).innerHTML = '';
+					if (score > bestScore) {
+						bestScore = score;
+						move = i;
+					}
+				}
+			}
+			document.getElementById('cell-' + move).innerHTML = 'O';
+			if (checkWin()) {
+				document.querySelector('.player-turn').innerHTML = 'Computer wins!';
+				gameEnded = true;
+				return;
+			}
+			if (checkDraw()) {
+				document.querySelector('.player-turn').innerHTML = 'Draw!';
+				gameEnded = true;
+				return;
+			}
+			switchPlayer();
+		}
+
+		function minimax(isMaximizing) {
+			if (checkWin()) {
+				return isMaximizing ? -1 : 1;
+			}
+			if (checkDraw()) {
+				return 0;
+			}
+			if (isMaximizing) {
+				let bestScore = -Infinity;
+				for (let i = 0; i < 9; i++) {
+					if (document.getElementById('cell-' + i).innerHTML === '') {
+						document.getElementById('cell-' + i).innerHTML = 'O';
+						let score = minimax(false);
+						document.getElementById('cell-' + i).innerHTML = '';
+						bestScore = Math.max(score, bestScore);
+					}
+				}
+				return bestScore;
+			} else {
+				let bestScore = Infinity;
+				for (let i = 0; i < 9; i++) {
+					if (document.getElementById('cell-' + i).innerHTML === '') {
+						document.getElementById('cell-' + i).innerHTML = 'X';
+						let score = minimax(true);
+						document.getElementById('cell-' + i).innerHTML = '';
+						bestScore = Math.min(score, bestScore);
+					}
+				}
+				return bestScore;
+			}
+		}
+
+		function checkWin() {
+			const winningCombinations = [
+				[0, 1, 2],
+				[3, 4, 5],
+				[6, 7, 8],
+				[0, 3, 6],
+				[1, 4, 7],
+				[2, 5, 8],
+				[0, 4, 8],
+				[2, 4, 6]
+			];
+			for (let i = 0; i < winningCombinations.length; i++) {
+				let a = winningCombinations[i][0];
+				let b = winningCombinations[i][1];
+				let c = winningCombinations[i][2];
+				if (document.getElementById('cell-' + a).innerHTML !== '' && document.getElementById('cell-' + a).innerHTML === document.getElementById('cell-' + b).innerHTML && document.getElementById('cell-' + b).innerHTML === document.getElementById('cell-' + c).innerHTML) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		function checkDraw() {
+			for (let i = 0; i < 9; i++) {
+				if (document.getElementById('cell-' + i).innerHTML === '') {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		function switchPlayer() {
+			currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+			document.querySelector('.player-turn').innerHTML = "Player " + currentPlayer + "'s turn";
+		}
+
+		function resetGame() {
+			for (let i = 0; i < 9; i++) {
+				document.getElementById('cell-' + i).innerHTML = '';
+			}
+			currentPlayer = 'X';
+			gameEnded = false;
+			document.querySelector('.player-turn').innerHTML = "Player X's turn";
+		}
+
+		document.querySelectorAll('.cell').forEach(cell => {
+			cell.addEventListener('click', () => {
+				makeMove(cell.id.split('-')[1]);
+			});
+		});
+		document.getElementById("back").addEventListener("click", function() {
+            window.location.href = "selected_game.html";
+          });
+	</script>
+</body>
+</html>
